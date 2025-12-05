@@ -75,7 +75,29 @@ dotnet --version    # if INSTALL_DOTNET=true
 
 ## CI/CD Usage
 
-### Building the Image
+This project includes automated GitHub Actions workflow that builds and pushes images to GitHub Container Registry.
+
+### Using Pre-built Images from GitHub Container Registry
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/rinukkusu/vibe-container:latest
+
+# Pull a specific version
+docker pull ghcr.io/rinukkusu/vibe-container:v1.0.0
+
+# Run the pre-built image
+docker run -d \
+  --name remote-dev-env \
+  -p 2222:22 \
+  -e INSTALL_PYTHON=true \
+  -e INSTALL_NODEJS=true \
+  -v ~/.ssh/id_rsa.pub:/ssh-keys/authorized_keys:ro \
+  -v dev-workspace:/home/dev/workspace \
+  ghcr.io/rinukkusu/vibe-container:latest
+```
+
+### Building Your Own Image
 
 ```bash
 # Build the image
@@ -89,27 +111,30 @@ docker push your-registry/dev-container:latest
 docker push your-registry/dev-container:v1.0.0
 ```
 
-### GitHub Actions Example
+### Automated Builds
 
-```yaml
-name: Build and Push Docker Image
+This repository includes a GitHub Actions workflow (`.github/workflows/build-and-push.yml`) that automatically:
 
-on:
-  push:
-    branches: [main]
+- **Builds** the Docker image on every push to main
+- **Pushes** to GitHub Container Registry (ghcr.io)
+- **Tags** with multiple strategies:
+  - `latest` - latest build from main branch
+  - `main-<sha>` - commit SHA from main branch
+  - `v1.0.0` - semantic version tags
+  - `1.0`, `1` - major.minor and major version tags
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+**Creating a Release:**
 
-      - name: Build and push Docker image
-        run: |
-          docker build -t ${{ secrets.REGISTRY }}/dev-container:${{ github.sha }} .
-          docker tag ${{ secrets.REGISTRY }}/dev-container:${{ github.sha }} ${{ secrets.REGISTRY }}/dev-container:latest
-          docker push ${{ secrets.REGISTRY }}/dev-container:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY }}/dev-container:latest
+```bash
+# Tag a new version
+git tag v1.0.0
+git push origin v1.0.0
+
+# GitHub Actions will automatically build and push:
+# - ghcr.io/rinukkusu/vibe-container:v1.0.0
+# - ghcr.io/rinukkusu/vibe-container:1.0
+# - ghcr.io/rinukkusu/vibe-container:1
+# - ghcr.io/rinukkusu/vibe-container:latest
 ```
 
 ### Running the Built Image
