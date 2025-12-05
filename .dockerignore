@@ -1,0 +1,43 @@
+# Git files
+.git
+.gitignore
+
+# Claude Code
+.claude/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Environment files (sensitive data)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+
+# SSH keys
+ssh-keys/
+
+# Documentation
+README.md
+LICENSE
+docs/
+
+# Build artifacts
+node_modules/
+dist/
+build/
+
+# Docker
+docker-compose.yml
+.dockerignore

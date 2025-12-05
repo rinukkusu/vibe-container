@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  dev-container:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: remote-dev-env
+    hostname: dev-container
+
+    ports:
+      - "2222:22"  # Map container port 22 to host port 2222
+
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - INSTALL_PYTHON=${INSTALL_PYTHON:-false}
+      - INSTALL_NODEJS=${INSTALL_NODEJS:-false}
+      - INSTALL_DART=${INSTALL_DART:-false}
+      - INSTALL_DOTNET=${INSTALL_DOTNET:-false}
+
+    volumes:
+      # SSH public key (required)
+      - ./ssh-keys/authorized_keys:/ssh-keys/authorized_keys:ro
+
+      # Workspace persistence
+      - dev-workspace:/home/dev/workspace
+
+      # SSH host keys (prevents host key change warnings on restart)
+      - ssh-host-keys:/etc/ssh
+
+      # GitHub CLI config persistence
+      - gh-config:/home/dev/.config/gh
+
+      # Claude Code config persistence
+      - claude-config:/home/dev/.claude
+
+      # APT cache and lib for runtime installation persistence
+      - apt-cache:/var/cache/apt
+      - apt-lib:/var/lib/apt
+
+    restart: unless-stopped
+
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+
+    # Use tmpfs for temporary files
+    tmpfs:
+      - /tmp
+      - /run
+
+    # Resource limits (adjust as needed)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          memory: 2G
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "pgrep", "sshd"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  dev-workspace:
+    driver: local
+  ssh-host-keys:
+    driver: local
+  gh-config:
+    driver: local
+  claude-config:
+    driver: local
+  apt-cache:
+    driver: local
+  apt-lib:
+    driver: local
