@@ -10,9 +10,15 @@ echo "=== Phase 1: Runtime Installation ==="
 # Install Python if requested
 if [ "$INSTALL_PYTHON" = "true" ] && ! command -v python3 &> /dev/null; then
     echo "Installing Python 3..."
-    apt-get update -qq
-    apt-get install -y python3 python3-pip python3-venv > /dev/null 2>&1
-    echo "✓ Python $(python3 --version 2>&1 | awk '{print $2}') installed"
+    set +e
+    apt-get update -qq 2>&1 | grep -v "^Get:" | grep -v "^Reading" || true
+    apt-get install -y python3 python3-pip python3-venv 2>&1 | grep -E "^E:|^Err:" || true
+    set -e
+    if command -v python3 &> /dev/null; then
+        echo "✓ Python $(python3 --version 2>&1 | awk '{print $2}') installed"
+    else
+        echo "⚠ Python installation may have failed"
+    fi
 elif [ "$INSTALL_PYTHON" = "true" ]; then
     echo "✓ Python already installed: $(python3 --version 2>&1 | awk '{print $2}')"
 fi
@@ -20,9 +26,15 @@ fi
 # Install Node.js if requested
 if [ "$INSTALL_NODEJS" = "true" ] && ! command -v node &> /dev/null; then
     echo "Installing Node.js LTS..."
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - > /dev/null 2>&1
-    apt-get install -y nodejs > /dev/null 2>&1
-    echo "✓ Node.js $(node --version) installed"
+    set +e
+    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - 2>&1 | grep -E "^E:|^Err:|Error" || true
+    apt-get install -y nodejs 2>&1 | grep -E "^E:|^Err:" || true
+    set -e
+    if command -v node &> /dev/null; then
+        echo "✓ Node.js $(node --version) installed"
+    else
+        echo "⚠ Node.js installation may have failed"
+    fi
 elif [ "$INSTALL_NODEJS" = "true" ]; then
     echo "✓ Node.js already installed: $(node --version)"
 fi
@@ -30,13 +42,19 @@ fi
 # Install Dart if requested
 if [ "$INSTALL_DART" = "true" ] && ! command -v dart &> /dev/null; then
     echo "Installing Dart..."
+    set +e
     wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
-        gpg --dearmor -o /usr/share/keyrings/dart.gpg 2>/dev/null
+        gpg --dearmor -o /usr/share/keyrings/dart.gpg 2>&1 | grep -i error || true
     echo "deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main" | \
         tee /etc/apt/sources.list.d/dart_stable.list > /dev/null
-    apt-get update -qq
-    apt-get install -y dart > /dev/null 2>&1
-    echo "✓ Dart $(dart --version 2>&1 | head -n1) installed"
+    apt-get update -qq 2>&1 | grep -v "^Get:" | grep -v "^Reading" || true
+    apt-get install -y dart 2>&1 | grep -E "^E:|^Err:" || true
+    set -e
+    if command -v dart &> /dev/null; then
+        echo "✓ Dart $(dart --version 2>&1 | head -n1) installed"
+    else
+        echo "⚠ Dart installation may have failed"
+    fi
 elif [ "$INSTALL_DART" = "true" ]; then
     echo "✓ Dart already installed: $(dart --version 2>&1 | head -n1)"
 fi
@@ -44,19 +62,25 @@ fi
 # Install .NET SDK if requested
 if [ "$INSTALL_DOTNET" = "true" ] && ! command -v dotnet &> /dev/null; then
     echo "Installing .NET SDK..."
-    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-    dpkg -i packages-microsoft-prod.deb > /dev/null 2>&1
-    rm packages-microsoft-prod.deb
-    apt-get update -qq
+    set +e
+    wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb 2>&1 | grep -i error || true
+    dpkg -i packages-microsoft-prod.deb 2>&1 | grep -E "^E:|error" || true
+    rm -f packages-microsoft-prod.deb
+    apt-get update -qq 2>&1 | grep -v "^Get:" | grep -v "^Reading" || true
     # Try .NET 10, fall back to 9 or 8 if not available
     if apt-cache show dotnet-sdk-10.0 > /dev/null 2>&1; then
-        apt-get install -y dotnet-sdk-10.0 > /dev/null 2>&1
+        apt-get install -y dotnet-sdk-10.0 2>&1 | grep -E "^E:|^Err:" || true
     elif apt-cache show dotnet-sdk-9.0 > /dev/null 2>&1; then
-        apt-get install -y dotnet-sdk-9.0 > /dev/null 2>&1
+        apt-get install -y dotnet-sdk-9.0 2>&1 | grep -E "^E:|^Err:" || true
     else
-        apt-get install -y dotnet-sdk-8.0 > /dev/null 2>&1
+        apt-get install -y dotnet-sdk-8.0 2>&1 | grep -E "^E:|^Err:" || true
     fi
-    echo "✓ .NET SDK $(dotnet --version) installed"
+    set -e
+    if command -v dotnet &> /dev/null; then
+        echo "✓ .NET SDK $(dotnet --version) installed"
+    else
+        echo "⚠ .NET SDK installation may have failed"
+    fi
 elif [ "$INSTALL_DOTNET" = "true" ]; then
     echo "✓ .NET SDK already installed: $(dotnet --version)"
 fi
@@ -89,11 +113,17 @@ echo "=== Phase 3: GitHub CLI Configuration ==="
 
 if [ -n "$GITHUB_TOKEN" ]; then
     echo "Configuring GitHub CLI..."
-    su - dev -c "echo '$GITHUB_TOKEN' | gh auth login --with-token" > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
+    # Don't fail the entire script if gh auth fails
+    set +e
+    su - dev -c "echo '$GITHUB_TOKEN' | gh auth login --with-token" 2>&1
+    GH_EXIT_CODE=$?
+    set -e
+
+    if [ $GH_EXIT_CODE -eq 0 ]; then
         echo "✓ GitHub CLI authenticated successfully"
     else
-        echo "⚠ GitHub CLI authentication failed"
+        echo "⚠ GitHub CLI authentication failed (exit code: $GH_EXIT_CODE)"
+        echo "  You can authenticate manually after connecting: gh auth login"
     fi
 else
     echo "No GITHUB_TOKEN provided. Run 'gh auth login' manually after connecting."
