@@ -19,8 +19,9 @@ services:
       - INSTALL_DOTNET=${INSTALL_DOTNET:-false}
 
     volumes:
-      # SSH public key (required)
-      - ./ssh-keys/authorized_keys:/ssh-keys/authorized_keys:ro
+      # SSH public key (create directory first: mkdir -p ssh-keys && cp ~/.ssh/id_rsa.pub ssh-keys/authorized_keys)
+      # Uncomment the line below after creating the ssh-keys directory
+      # - ./ssh-keys/authorized_keys:/ssh-keys/authorized_keys:ro
 
       # Workspace persistence
       - dev-workspace:/home/dev/workspace

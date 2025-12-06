@@ -97,13 +97,29 @@ echo "=== Phase 2: SSH Configuration ==="
 
 if [ -f "$SSH_PUBLIC_KEY_PATH" ]; then
     echo "Configuring SSH public key..."
-    cp "$SSH_PUBLIC_KEY_PATH" /home/dev/.ssh/authorized_keys
-    chown dev:dev /home/dev/.ssh/authorized_keys
-    chmod 600 /home/dev/.ssh/authorized_keys
-    echo "✓ SSH key configured for user 'dev'"
+    set +e
+    cp "$SSH_PUBLIC_KEY_PATH" /home/dev/.ssh/authorized_keys 2>&1
+    CP_EXIT_CODE=$?
+    set -e
+
+    if [ $CP_EXIT_CODE -eq 0 ]; then
+        chown dev:dev /home/dev/.ssh/authorized_keys
+        chmod 600 /home/dev/.ssh/authorized_keys
+        echo "✓ SSH key configured for user 'dev'"
+    else
+        echo "⚠ Failed to copy SSH public key (exit code: $CP_EXIT_CODE)"
+        echo "  You can add your key manually after connecting"
+    fi
 else
     echo "⚠ WARNING: No SSH public key found at $SSH_PUBLIC_KEY_PATH"
-    echo "  You will need to copy your public key manually or mount it at runtime"
+    echo "  Container will start but you won't be able to SSH in"
+    echo "  Mount your key at runtime or add it manually after exec'ing into the container"
+    echo ""
+    echo "  To add key manually:"
+    echo "    docker exec -it <container> bash"
+    echo "    echo 'your-public-key-here' > /home/dev/.ssh/authorized_keys"
+    echo "    chown dev:dev /home/dev/.ssh/authorized_keys"
+    echo "    chmod 600 /home/dev/.ssh/authorized_keys"
 fi
 
 echo ""
