@@ -4,6 +4,19 @@ set -e
 echo "=== Starting Remote Development Container ==="
 echo ""
 
+# Verify dev user exists
+if ! id dev &>/dev/null; then
+    echo "ERROR: User 'dev' does not exist!"
+    echo "This should have been created in the Dockerfile."
+    echo "Creating user now as fallback..."
+    useradd -m -s /bin/bash -G sudo dev || true
+    echo "dev:dev" | chpasswd || true
+    echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers || true
+fi
+
+echo "✓ User 'dev' verified (UID: $(id -u dev), GID: $(id -g dev))"
+echo ""
+
 # Phase 1: Language Runtime Installation
 echo "=== Phase 1: Runtime Installation ==="
 
