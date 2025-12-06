@@ -15,6 +15,11 @@ if ! id dev &>/dev/null; then
 fi
 
 echo "✓ User 'dev' verified (UID: $(id -u dev), GID: $(id -g dev))"
+
+# Fix ownership of /home/dev if it's wrong
+echo "Fixing /home/dev ownership..."
+chown -R dev:dev /home/dev 2>/dev/null || true
+echo "✓ /home/dev ownership corrected"
 echo ""
 
 # Phase 1: Language Runtime Installation
