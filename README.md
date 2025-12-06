@@ -23,7 +23,9 @@ A secure, SSH-accessible remote development environment with on-demand language 
 ### Prerequisites
 
 - Docker and Docker Compose installed
-- SSH public key (`~/.ssh/id_rsa.pub`)
+- SSH public key (recommended: Ed25519, but RSA also supported)
+  - **Generate Ed25519 key (recommended):** `ssh-keygen -t ed25519 -C "your_email@example.com"`
+  - **Or use existing RSA key:** `~/.ssh/id_rsa.pub`
 - GitHub Personal Access Token (optional, for GitHub CLI)
 
 ### Local Testing Setup
