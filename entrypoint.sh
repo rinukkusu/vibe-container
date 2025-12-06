@@ -95,6 +95,11 @@ fi
 # Phase 2: SSH Configuration
 echo "=== Phase 2: SSH Configuration ==="
 
+# Ensure .ssh directory exists with correct permissions
+mkdir -p /home/dev/.ssh
+chown dev:dev /home/dev/.ssh
+chmod 700 /home/dev/.ssh
+
 if [ -f "$SSH_PUBLIC_KEY_PATH" ]; then
     echo "Configuring SSH public key..."
     set +e
