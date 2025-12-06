@@ -70,7 +70,9 @@ RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/s
     echo "MaxSessions 2" >> /etc/ssh/sshd_config && \
     echo "ClientAliveInterval 300" >> /etc/ssh/sshd_config && \
     echo "ClientAliveCountMax 2" >> /etc/ssh/sshd_config && \
-    echo "LoginGraceTime 60" >> /etc/ssh/sshd_config
+    echo "LoginGraceTime 60" >> /etc/ssh/sshd_config && \
+    echo "PubkeyAcceptedAlgorithms +ssh-rsa" >> /etc/ssh/sshd_config && \
+    echo "HostKeyAlgorithms +ssh-rsa" >> /etc/ssh/sshd_config
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
