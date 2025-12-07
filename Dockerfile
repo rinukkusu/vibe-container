@@ -34,9 +34,6 @@ RUN wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
     apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code CLI using official install script
-RUN curl -fsSL https://claude.ai/install.sh | bash -s latest
-
 # Create non-root dev user with sudo privileges
 RUN useradd -m -s /bin/bash -G sudo dev && \
     echo "dev:dev" | chpasswd && \
@@ -52,6 +49,18 @@ RUN mkdir -p /home/dev/workspace && \
     mkdir -p /home/dev/.config && \
     mkdir -p /home/dev/.claude && \
     chown -R dev:dev /home/dev/workspace /home/dev/.config /home/dev/.claude
+
+# Switch to dev user for Claude installation
+USER dev
+
+# Install Claude Code CLI using official install script as dev user
+RUN curl -fsSL https://claude.ai/install.sh | bash -s latest
+
+# Add Claude bin directory to PATH in .bashrc
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/dev/.bashrc
+
+# Switch back to root for remaining configuration
+USER root
 
 # Configure SSH daemon
 RUN mkdir -p /var/run/sshd && \
