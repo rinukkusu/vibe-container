@@ -34,6 +34,33 @@ RUN wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
     apt-get install -y gh && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Python 3
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js LTS
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Dart
+RUN wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
+    gpg --dearmor -o /usr/share/keyrings/dart.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main" | \
+    tee /etc/apt/sources.list.d/dart_stable.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y dart && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install .NET SDK
+RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm -f packages-microsoft-prod.deb && \
+    apt-get update && \
+    apt-get install -y dotnet-sdk-9.0 && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root dev user with sudo privileges
 RUN useradd -m -s /bin/bash -G sudo dev && \
     echo "dev:dev" | chpasswd && \
@@ -90,10 +117,6 @@ RUN chmod +x /entrypoint.sh
 # Environment variables
 ENV GITHUB_TOKEN=""
 ENV SSH_PUBLIC_KEY_PATH="/ssh-keys/authorized_keys"
-ENV INSTALL_PYTHON="false"
-ENV INSTALL_NODEJS="false"
-ENV INSTALL_DART="false"
-ENV INSTALL_DOTNET="false"
 
 # Expose SSH port
 EXPOSE 22

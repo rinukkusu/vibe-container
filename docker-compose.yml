@@ -13,10 +13,6 @@ services:
 
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
-      - INSTALL_PYTHON=${INSTALL_PYTHON:-false}
-      - INSTALL_NODEJS=${INSTALL_NODEJS:-false}
-      - INSTALL_DART=${INSTALL_DART:-false}
-      - INSTALL_DOTNET=${INSTALL_DOTNET:-false}
 
     volumes:
       # SSH public key (create directory first: mkdir -p ssh-keys && cp ~/.ssh/id_rsa.pub ssh-keys/authorized_keys)
@@ -34,10 +30,6 @@ services:
 
       # Claude Code config persistence
       - claude-config:/home/dev/.claude
-
-      # APT cache and lib for runtime installation persistence
-      - apt-cache:/var/cache/apt
-      - apt-lib:/var/lib/apt
 
     restart: unless-stopped
 
@@ -75,8 +67,4 @@ volumes:
   gh-config:
     driver: local
   claude-config:
-    driver: local
-  apt-cache:
-    driver: local
-  apt-lib:
     driver: local

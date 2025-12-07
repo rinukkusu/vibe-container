@@ -44,7 +44,6 @@ chmod 644 ssh-keys/authorized_keys
 cp .env.example .env
 # Edit .env and configure:
 # - GITHUB_TOKEN (optional)
-# - INSTALL_PYTHON, INSTALL_NODEJS, etc. (set to "true" for needed runtimes)
 ```
 
 3. **Build and start the container:**
@@ -68,11 +67,11 @@ claude auth
 # Verify GitHub CLI (if GITHUB_TOKEN was set)
 gh auth status
 
-# Check installed runtimes
-python3 --version   # if INSTALL_PYTHON=true
-node --version      # if INSTALL_NODEJS=true
-dart --version      # if INSTALL_DART=true
-dotnet --version    # if INSTALL_DOTNET=true
+# Check installed runtimes (all pre-installed)
+python3 --version
+node --version
+dart --version
+dotnet --version
 ```
 
 ## CI/CD Usage
@@ -92,8 +91,6 @@ docker pull ghcr.io/rinukkusu/vibe-container:v1.0.0
 docker run -d \
   --name remote-dev-env \
   -p 2222:22 \
-  -e INSTALL_PYTHON=true \
-  -e INSTALL_NODEJS=true \
   -v ~/.ssh/id_rsa.pub:/ssh-keys/authorized_keys:ro \
   -v dev-workspace:/home/dev/workspace \
   ghcr.io/rinukkusu/vibe-container:latest
@@ -146,17 +143,11 @@ docker run -d \
   --name remote-dev-env \
   -p 2222:22 \
   -e GITHUB_TOKEN=${GITHUB_TOKEN} \
-  -e INSTALL_PYTHON=true \
-  -e INSTALL_NODEJS=true \
-  -e INSTALL_DART=false \
-  -e INSTALL_DOTNET=false \
   -v /path/to/authorized_keys:/ssh-keys/authorized_keys:ro \
   -v dev-workspace:/home/dev/workspace \
   -v ssh-host-keys:/etc/ssh \
   -v gh-config:/home/dev/.config/gh \
   -v claude-config:/home/dev/.claude \
-  -v apt-cache:/var/cache/apt \
-  -v apt-lib:/var/lib/apt \
   --security-opt no-new-privileges:true \
   your-registry/dev-container:latest
 ```
@@ -168,10 +159,6 @@ docker run -d \
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `GITHUB_TOKEN` | GitHub personal access token | - | No |
-| `INSTALL_PYTHON` | Install Python 3 on first start | `false` | No |
-| `INSTALL_NODEJS` | Install Node.js LTS on first start | `false` | No |
-| `INSTALL_DART` | Install Dart on first start | `false` | No |
-| `INSTALL_DOTNET` | Install .NET SDK on first start | `false` | No |
 | `SSH_PUBLIC_KEY_PATH` | Path to mounted authorized_keys | `/ssh-keys/authorized_keys` | No |
 
 ### Ports
@@ -189,31 +176,21 @@ docker run -d \
 - SSH host keys: `ssh-host-keys:/etc/ssh`
 - GitHub config: `gh-config:/home/dev/.config/gh`
 - Claude config: `claude-config:/home/dev/.claude`
-- APT cache: `apt-cache:/var/cache/apt`
-- APT lib: `apt-lib:/var/lib/apt`
 
-## On-Demand Runtime Installation
+## Pre-installed Runtimes
 
-This container uses a unique approach: language runtimes are installed on **first start** based on environment variables, not baked into the image.
+This container comes with all major language runtimes pre-installed at build time for immediate use:
+
+- **Python 3** with pip and venv
+- **Node.js LTS** with npm
+- **Dart** SDK
+- **.NET SDK 9.0**
 
 ### Benefits
 
-- **Smaller base image**: ~800MB instead of ~2GB
-- **Faster CI/CD builds**: Only core tools in the image
-- **Flexible**: Same image, different runtime combinations
-- **On-demand**: Only install what you need
-
-### How It Works
-
-1. Set environment variables (e.g., `INSTALL_PYTHON=true`)
-2. On first start, entrypoint script installs requested runtimes
-3. Installations persist via volume mounts
-4. Subsequent starts are fast (~5 seconds)
-
-### First Start Time
-
-- Without runtimes: ~5 seconds
-- With all 4 runtimes: ~2-5 minutes (one-time installation)
+- **Fast startup**: Container starts in ~5 seconds
+- **No configuration needed**: All runtimes ready to use immediately
+- **Consistent environment**: Same tools across all instances
 
 ## Security Features
 
@@ -389,14 +366,13 @@ deploy:
 
 ### Additional Runtimes
 
-Add to `entrypoint.sh` before Phase 2:
+Add to `Dockerfile` before the dev user creation:
 
-```bash
-# Install Go if requested
-if [ "$INSTALL_GO" = "true" ] && ! command -v go &> /dev/null; then
-    echo "Installing Go..."
-    # Add installation commands
-fi
+```dockerfile
+# Install Go
+RUN wget -qO- https://go.dev/dl/go1.21.0.linux-amd64.tar.gz | \
+    tar -C /usr/local -xz && \
+    echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
 ```
 
 ## Project Structure
