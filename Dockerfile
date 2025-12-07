@@ -53,14 +53,10 @@ RUN wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
     apt-get install -y dart && \
     rm -rf /var/lib/apt/lists/*
 
-# Install .NET SDK (try 10.0, fall back to 9.0, then 8.0)
-RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    rm -f packages-microsoft-prod.deb && \
-    apt-get update && \
-    (apt-get install -y dotnet-sdk-10.0 || \
-     apt-get install -y dotnet-sdk-9.0 || \
-     apt-get install -y dotnet-sdk-8.0) && \
+# Install .NET SDK 8 from Ubuntu native repository
+# Ubuntu 24.04+ ships .NET 8 in main repository (maintained by Canonical)
+RUN apt-get update && \
+    apt-get install -y dotnet-sdk-8.0 && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root dev user with sudo privileges
