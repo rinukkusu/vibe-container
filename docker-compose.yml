@@ -19,17 +19,11 @@ services:
       # Uncomment the line below after creating the ssh-keys directory
       # - ./ssh-keys/authorized_keys:/ssh-keys/authorized_keys:ro
 
-      # Workspace persistence
-      - dev-workspace:/home/dev/workspace
+      # Complete home directory persistence (includes workspace, configs, etc.)
+      - dev-home:/home/dev
 
       # SSH host keys (prevents host key change warnings on restart)
       - ssh-host-keys:/etc/ssh
-
-      # GitHub CLI config persistence
-      - gh-config:/home/dev/.config/gh
-
-      # Claude Code config persistence
-      - claude-config:/home/dev/.claude
 
     restart: unless-stopped
 
@@ -60,11 +54,7 @@ services:
       start_period: 10s
 
 volumes:
-  dev-workspace:
+  dev-home:
     driver: local
   ssh-host-keys:
-    driver: local
-  gh-config:
-    driver: local
-  claude-config:
     driver: local

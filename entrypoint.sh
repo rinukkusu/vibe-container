@@ -16,10 +16,11 @@ fi
 
 echo "✓ User 'dev' verified (UID: $(id -u dev), GID: $(id -g dev))"
 
-# Fix ownership of /home/dev if it's wrong
-echo "Fixing /home/dev ownership..."
+# Fix ownership and permissions of /home/dev
+echo "Fixing /home/dev ownership and permissions..."
 chown -R dev:dev /home/dev 2>/dev/null || true
-echo "✓ /home/dev ownership corrected"
+chmod 755 /home/dev
+echo "✓ /home/dev ownership and permissions corrected"
 echo ""
 
 # Phase 2: SSH Configuration
