@@ -53,10 +53,11 @@ RUN wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
     apt-get install -y dart && \
     rm -rf /var/lib/apt/lists/*
 
-# Install .NET SDK 8 from Ubuntu native repository
-# Ubuntu 24.04+ ships .NET 8 in main repository (maintained by Canonical)
-RUN apt-get update && \
-    apt-get install -y dotnet-sdk-8.0 && \
+# Install .NET 10 SDK from Ubuntu backports PPA
+# .NET 10 is LTS with 3 years support (until Nov 2028)
+RUN add-apt-repository -y ppa:dotnet/backports && \
+    apt-get update && \
+    apt-get install -y dotnet-sdk-10.0 && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root dev user with sudo privileges
