@@ -53,12 +53,14 @@ RUN wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | \
     apt-get install -y dart && \
     rm -rf /var/lib/apt/lists/*
 
-# Install .NET 10 SDK from Ubuntu backports PPA
+# Install .NET 10 SDK using Microsoft's official install script
 # .NET 10 is LTS with 3 years support (until Nov 2028)
-RUN add-apt-repository -y ppa:dotnet/backports && \
-    apt-get update && \
-    apt-get install -y dotnet-sdk-10.0 && \
-    rm -rf /var/lib/apt/lists/*
+# Using script because Ubuntu 24.04 backports PPA doesn't have .NET 10 yet
+RUN curl -fsSL https://dot.net/v1/dotnet-install.sh -o dotnet-install.sh && \
+    chmod +x dotnet-install.sh && \
+    ./dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet && \
+    rm dotnet-install.sh && \
+    ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
 
 # Create non-root dev user with sudo privileges
 RUN useradd -m -s /bin/bash -G sudo dev && \
